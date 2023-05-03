@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Google Maps API - Ongkos Kirim</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBeLKmlSgPHmdqCLP_kpCGqcEQCEncBue4&callback=initMap" defer></script>
+    <script>
+      let map;
+
+	  function initMap() {
+    const penjual = { lat: -6.2240166, lng: 106.8012741 };
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: penjual,
+      zoom: 15,
+    });
+
+    // Tambahkan marker untuk penjual
+    new google.maps.Marker({
+      position: penjual,
+      map,
+      title: "Lokasi Penjual",
+    });
+
+    // Dapatkan lokasi pembeli menggunakan geolocation API
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const pembeli = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+
+          // Tambahkan marker untuk pembeli
+          new google.maps.Marker({
+            position: pembeli,
+            map,
+            title: "Lokasi Pembeli",
+          });
+
+          // Hitung jarak antara penjual dan pembeli menggunakan Haversine formula
+          const R = 6371; // Radius bumi dalam km
+          const lat1 = penjual.lat;
+          const lat2 = pembeli.lat;
+          const lon1 = penjual.lng;
+          const lon2 = pembeli.lng;
+
+          const dLat = ((lat2 - lat1) * Math.PI) / 180;
+          const dLon = ((lon2 - lon1) * Math.PI) / 180;
+          const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos((lat1 * Math.PI) / 180) *
+              Math.cos((lat2 * Math.PI) / 180) *
+              Math.sin(dLon / 2) *
+              Math.sin(dLon / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          const distance = R * c;
+
+          // Hitung biaya ongkos kirim
+          const ongkir = Math.ceil(distance * 1000) * 1000;
+
+          // Tampilkan informasi ongkos kirim
+          document.getElementById("ongkos_kirim").innerHTML = `Ongkos Kirim: Rp ${ongkir.toLocaleString()}`;
+
+          // Buat link Google Maps dengan titik lokasi pembeli
+          const google_maps_link = `https://www.google.com/maps/search/?api=1&query=${pembeli.lat},${pembeli.lng}`;
+
+          // Buat link Whatsapp dengan pesan otomatis
+          const message = `Halo, saya ingin memesan produk Anda dengan ongkos kirim Rp ${ongkir.toLocaleString()} ke lokasi: ${google_maps_link}`;
+          const whatsapp_link = `https://wa.me/6281234567890?text=${encodeURIComponent(
+            message
+          )}`;
+
+          // Tambahkan tombol order dengan link Whatsapp
+          document.getElementById(
+            "order_button"
+          ).href = whatsapp_link;
+          document.getElementById("order_button").style.display = "block";
+        },
+        () => {
+          alert("Gagal mendapatkan lokasi Anda!");
+        }
+      );
+    } else {
+      alert("Geolocation tidak didukung oleh browser Anda.");
+    }
+  }
+</script>
+  </head>
+  
+<body>
+	<div id="map" style="width: 100%; height: 500px;"></div>
+	<div id="map"></div>
+	<div id="ongkos_kirim"></div>
+	<a id="order_button" href="" style="display:none">Klik untuk Order melalui Whatsapp</a>
+  </body>
+  </html>
